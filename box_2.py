@@ -1,11 +1,12 @@
 import time
+from PIL import Image
 import random
 
 # DEFINE THINGS
-VOID = 9
 BOX = 8
 WALL = 0
 PATH = 1
+PLAYER = 9
 VALID_PATH = 2
 INVALID_PATH = 3
 ENDPOINT = 4
@@ -20,6 +21,8 @@ GAME_SOLVED = 111
 COLORS = {
     WALL: (0, 0, 0),
     PATH: (255, 255, 255),
+    BOX: (0, 255, 0),
+    PLAYER: (255, 0, 0),
     VALID_PATH: (0, 255, 0),
     INVALID_PATH: (255, 0, 0),
     ENDPOINT: (0, 0, 255),
@@ -83,8 +86,8 @@ def save_maze(maze, blockSize=20, basename="maze"):
         for x, block_ID in enumerate(row):
             set_color(img, x, y, blockSize, COLORS[block_ID])
 
-    img.save("%s_%d_%d_%d.png"
-             % (basename, w_blocks, h_blocks, blockSize))
+    img.save("step_%s.png"
+             % (basename))
 
 
 def load_maze(filename, ext=".png"):
@@ -224,15 +227,10 @@ def valid_move_check_for_solving(point, maze):
         return False
 
 
-
-
-
 def check_player_connectivity(board_map, player_start, player_destination):
-
     maze = []
     for row in board_map:
         maze.append([element for element in row])
-
 
     stack = [player_start]
 
@@ -240,6 +238,7 @@ def check_player_connectivity(board_map, player_start, player_destination):
 
     x, y = stack[-1]
     maze[y][x] = VALID_PATH
+
     if stack[-1] == player_destination:
         return True
 
@@ -256,8 +255,9 @@ def check_player_connectivity(board_map, player_start, player_destination):
             x, y = stack[-1]
             maze[y][x] = INVALID_PATH
             stack.pop()
-    
+
     return False
+
 
 def generate_valid_push_move_list(board_status):
     board_map = board_status[0]
@@ -334,7 +334,6 @@ class Push_Move():
 
 
 def update(board_status, push_move):
-    push_direction = push_move.direction
     board_status.pop()
 
     print("----------------------------------")
@@ -370,7 +369,6 @@ def update(board_status, push_move):
 
 
 def retrospect(board_status, push_move):
-    push_direction = push_move.direction
     board_status.pop()
 
     print("----------------------------------")
@@ -419,17 +417,13 @@ def generate_solution(board, target_list, player_initial):
 
     valid_push_move_list = generate_valid_push_move_list(board_status)
 
-
     stack_move = []
     stack_possibility = []
     stack_possibility.append(valid_push_move_list)
 
-
-
     stack_move.append(stack_possibility[-1][-1])
     update(board_status, stack_move[-1])
     stack_possibility[-1].pop()
-
 
     while 1:
         # step 0, reset the repetition_status to False:
@@ -439,7 +433,8 @@ def generate_solution(board, target_list, player_initial):
         # step 1, check whether every box is at target location
         if all(retrieve_block(board_status[0], target) is BOX for target in target_list) is True:
             print("GAME_SOLVED")
-            return GAME_SOLVED
+            return stack_move
+            # return GAME_SOLVED
         else:
             pass
 
@@ -455,7 +450,7 @@ def generate_solution(board, target_list, player_initial):
                 pass
 
         if repetition_status is True:
-            print True
+            print(True)
             retrospect(board_status, stack_move[-1])
             stack_move.pop()
             while stack_possibility[-1] == []:
@@ -468,7 +463,7 @@ def generate_solution(board, target_list, player_initial):
             stack_possibility[-1].pop()
             continue
         else:
-            print False
+            print(False)
             temp_1 = []
             temp_2 = (board_status[-1][0], board_status[-1][-1])
             for row in board_status[0]:
@@ -496,8 +491,40 @@ def generate_solution(board, target_list, player_initial):
             stack_possibility[-1].pop()
 
 
+def solution_image_display(board_initial_status, list_target, stack):
+    board_status = board_initial_status
+    board_map = board_status[0]
+    player_location = board_status[-1]
+    print(board_map)
+    for point in list_target:
+        rewrite_board(board_map, point, ENDPOINT)
+    rewrite_board(board_map, player_location, PLAYER)
 
+    basename_num = 0
+    print(board_map)
+    save_maze(board_map, blockSize=20, basename=str(basename_num))
 
+    for move in stack:
+        rewrite_board(board_map, player_location, PATH)
+        if move.direction == LEFT:
+            player_location = right(move.box)
+        elif move.direction == RIGHT:
+            player_location = left(move.box)
+        elif move.direction == UP:
+            player_location = down(move.box)
+        elif move.direction == DOWN:
+            player_location = up(move.box)
+        rewrite_board(board_map, player_location, PLAYER)
+        basename_num = basename_num + 1
+        save_maze(board_map, blockSize=20, basename=str(basename_num))
+
+        update(board_status, move)
+        board_map = board_status[0]
+        rewrite_board(board_map, player_location, PATH)
+        player_location = board_status[-1]
+        rewrite_board(board_map, player_location, PLAYER)
+        basename_num = basename_num + 1
+        save_maze(board_map, blockSize=20, basename=str(basename_num))
 
 
 if __name__ == "__main__":
@@ -506,10 +533,13 @@ if __name__ == "__main__":
         [WALL, PATH, PATH, PATH, PATH, PATH, PATH, PATH, WALL],
         [WALL, PATH, BOX, PATH, PATH, PATH, PATH, PATH, WALL],
         [WALL, PATH, PATH, WALL, PATH, PATH, PATH, WALL, WALL],
-        [WALL, WALL, WALL, WALL, WALL, WALL, PATH, WALL],
-        [VOID, VOID, VOID, VOID, VOID, WALL, PATH, WALL],
-        [VOID, VOID, VOID, VOID, VOID, WALL, WALL, WALL]
+        [WALL, WALL, WALL, WALL, WALL, WALL, PATH, WALL, WALL],
+        [WALL, WALL, WALL, WALL, WALL, WALL, PATH, WALL, WALL],
+        [WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL]
     ]
+    test_board_backup = []
+    for row in test_board:
+        test_board_backup.append([element for element in row])
 
     # test_board = [
     #     [WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL, WALL],
@@ -523,17 +553,8 @@ if __name__ == "__main__":
     # meaning test_board[2][1] should be PLAYER
     target_list = [(7, 1)]
 
-    generate_solution(test_board, target_list, player_initial)
-
-
-    # save_maze(test_maze, blockSize=20)
-    # generate_maze(50, 50)
-    # solve_maze("maze_50_50_20.png")
-
-
-
-
-
+    solution = generate_solution(test_board, target_list, player_initial)
+    solution_image_display([test_board_backup, player_initial], target_list, solution)
 
 
 
