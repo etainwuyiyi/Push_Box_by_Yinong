@@ -15,7 +15,7 @@ pip install pillow
 
 1. [box_3.py](box_3.py) to read in the configuration by accessing the .data file. Find Solution. Display solution in a sery of images. When going through the solution images, pretend it's a video, then you understand the solution.
 2. [README.md](README.md) to give introductions to this file.
-3. [unit_test_1.data](unit_test_1.data) is one config file for testing of the code. Same as unit_test_2.data, unit_test_3.data.
+3. [unit_test_1.data](unit_test_1.data) is one config file for testing the code. Same as for unit_test_2.data, unit_test_3.data.
 4. There is a example solution displayed in the zip file.
 
 ## Compatability
