@@ -1,5 +1,4 @@
 # Push_Box_by_Yinong
-# TeamLazor
 
 > **Team members**: Yinong Zhao
 
@@ -28,7 +27,7 @@ TeamLasor project works with python 3 under both Windows and Mac systems. Click 
 
 ### box_3.py
 
-To use **read_BFF.py**, use the code via loading the desired config file.
+To use **box_3.py**, use the code via loading the desired config file.
 ```
 game_readin = load_unit_test("unit_test_2.data")
 
